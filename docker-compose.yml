@@ -1,0 +1,63 @@
+version: "3.8" # Quita esta línea si te da warning, pero déjala por compatibilidad
+
+services:
+  # Base de datos
+  db:
+    image: postgres:15
+    container_name: citas_db
+    environment:
+      POSTGRES_DB: citas_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Spring Boot
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: citas_backend
+    ports:
+      - "8081:8080" # IMPORTANTE: mapea 8081 externo a 8080 interno
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/citas_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  # Frontend React
+  frontend:
+    build:
+      context: ../frontend # Ruta donde está tu frontend
+      dockerfile: Dockerfile
+    container_name: citas_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://backend:8080 # ¡Usa el nombre del contenedor!
+    networks:
+      - app_network
+    depends_on:
+      - backend
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
