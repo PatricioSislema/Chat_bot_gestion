@@ -1,7 +1,8 @@
 import axios from 'axios';
 
+// 🔥 Usar localhost (funciona en Windows)
 const api = axios.create({
-    baseURL: 'http://localhost:8081/api'  // ✅ CAMBIAR A localhost
+    baseURL: 'http://localhost:8081/api'
 });
 
 // Interceptor para agregar el token automáticamente

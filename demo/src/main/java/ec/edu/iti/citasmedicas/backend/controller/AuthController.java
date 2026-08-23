@@ -2,8 +2,12 @@ package ec.edu.iti.citasmedicas.backend.controller;
 
 import ec.edu.iti.citasmedicas.backend.dto.LoginDTO;
 import ec.edu.iti.citasmedicas.backend.model.Usuario;
+import ec.edu.iti.citasmedicas.backend.security.JwtService;
 import ec.edu.iti.citasmedicas.backend.service.UsuarioService;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,21 +17,41 @@ public class AuthController {
     @Autowired
     private UsuarioService usuarioService;
 
+    @Autowired
+    private JwtService jwtService;
+
     @PostMapping("/login")
-    public LoginDTO login(@RequestBody LoginDTO loginDTO) {
+    public ResponseEntity<LoginDTO> login(@RequestBody LoginDTO loginDTO) {
+
         Usuario usuario = usuarioService.findByUsername(loginDTO.getUsername());
 
+        // Usuario no existe
         if (usuario == null) {
-            loginDTO.setToken(null);
-            loginDTO.setRol("ERROR");
-            return loginDTO;
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // 🔥 DESACTIVADO TEMPORALMENTE - NO VERIFICA CONTRASEÑA
-        loginDTO.setToken("token-real-" + System.currentTimeMillis());
+        // Usuario inactivo
+        if (!usuario.getActivo()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // Verificar contraseña contra BCrypt
+        boolean passwordCorrecta = usuarioService.verificarContraseña(
+                loginDTO.getPassword(),
+                usuario.getPassword());
+
+        // Contraseña incorrecta
+        if (!passwordCorrecta) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // Generar JWT real
+        String token = jwtService.generateToken(usuario);
+
+        loginDTO.setToken(token);
         loginDTO.setRol(usuario.getRol());
         loginDTO.setPassword(null);
 
-        return loginDTO;
+        return ResponseEntity.ok(loginDTO);
     }
 }

@@ -2,6 +2,7 @@ package ec.edu.iti.citasmedicas.backend.service;
 
 import ec.edu.iti.citasmedicas.backend.model.Usuario;
 import ec.edu.iti.citasmedicas.backend.repository.UsuarioRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,19 +17,28 @@ public class UsuarioService implements UserDetailsService {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // ✅ INYECCIÓN POR CAMPO
+    private PasswordEncoder passwordEncoder;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username)
+            throws UsernameNotFoundException {
+
         return usuarioRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "Usuario no encontrado: " + username));
     }
 
-    public boolean verificarContraseña(String rawPassword, String encodedPassword) {
-        return passwordEncoder.matches(rawPassword, encodedPassword);
+    public boolean verificarContraseña(
+            String rawPassword,
+            String encodedPassword) {
+
+        return passwordEncoder.matches(
+                rawPassword,
+                encodedPassword);
     }
 
     public Usuario findByUsername(String username) {
+
         return usuarioRepository.findByUsername(username)
                 .orElse(null);
     }

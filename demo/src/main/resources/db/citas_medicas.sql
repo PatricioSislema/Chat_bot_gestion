@@ -4,7 +4,7 @@
 -- ============================================
 
 -- 1. CREAR LA BASE DE DATOS
-CREATE DATABASE citas_medicas;
+
 
 -- Conectarse a la base de datos
 \c citas_medicas;

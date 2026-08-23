@@ -1,34 +1,74 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:15
     container_name: citas_db
+
     environment:
       POSTGRES_DB: citas_medicas
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+
     ports:
       - "5432:5432"
+
     volumes:
-      - ./src/main/resources/db/citas_medicas.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+      - ./demo/src/main/resources/db/citas_medicas.sql:/docker-entrypoint-initdb.d/init.sql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d citas_medicas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - app_network
 
   backend:
-    build: .
+    build:
+      context: ./demo
+      dockerfile: Dockerfile
+
     container_name: citas_backend
+
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/citas_medicas
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
     ports:
       - "8081:8081"
 
+    networks:
+      - app_network
+
   frontend:
-    build: ../frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
     container_name: citas_frontend
+
     depends_on:
       - backend
+
+    environment:
+      VITE_API_URL: http://localhost:8081
+
     ports:
       - "5173:5173"
+
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
