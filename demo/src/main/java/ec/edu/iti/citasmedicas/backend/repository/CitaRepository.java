@@ -30,4 +30,6 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     List<Cita> findByPacienteIdAndEstado(Long pacienteId, String estado);
 
     List<Cita> findByDoctorIdAndFechaAndHora(Long doctorId, LocalDate fecha, LocalTime hora);
+
+    boolean existsByDoctorId(Long doctorId);
 }

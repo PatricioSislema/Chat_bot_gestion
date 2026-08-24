@@ -17,7 +17,7 @@ public class DoctorController {
     @Autowired
     private DoctorService doctorService;
 
-    //@PreAuthorize("hasAnyRole('ADMIN', 'EDITOR', 'VIEWER')")
+    // @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR', 'VIEWER')")
     @GetMapping
     public List<DoctorDTO> listarTodos() {
         return doctorService.listarTodos();
@@ -56,11 +56,16 @@ public class DoctorController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        boolean eliminado = doctorService.eliminar(id);
-        if (!eliminado) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+        try {
+            boolean eliminado = doctorService.eliminar(id);
+            if (!eliminado) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(e.getMessage());
         }
-        return ResponseEntity.noContent().build();
     }
 }

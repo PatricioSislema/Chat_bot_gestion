@@ -6,8 +6,10 @@ import ec.edu.iti.citasmedicas.backend.model.Doctor;
 import ec.edu.iti.citasmedicas.backend.model.Especialidad;
 import ec.edu.iti.citasmedicas.backend.repository.DoctorRepository;
 import ec.edu.iti.citasmedicas.backend.repository.EspecialidadRepository;
+import ec.edu.iti.citasmedicas.backend.repository.CitaRepository; // 🔥 NUEVO
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // 🔥 NUEVO
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +28,9 @@ public class DoctorService {
 
     @Autowired
     private DoctorMapper doctorMapper;
+
+    @Autowired
+    private CitaRepository citaRepository; // 🔥 NUEVO
 
     /**
      * Listar todos los médicos.
@@ -52,21 +57,16 @@ public class DoctorService {
      * Crear un nuevo médico.
      */
     public DoctorDTO crear(DoctorDTO dto) {
-        // 1. Verificar que la especialidad existe
         Especialidad especialidad = especialidadRepository.findById(dto.getEspecialidad().getId())
                 .orElse(null);
         if (especialidad == null) {
-            return null; // La especialidad no existe
+            return null;
         }
 
-        // 2. Convertir DTO a entidad
         Doctor doctor = doctorMapper.toEntity(dto);
         doctor.setEspecialidad(especialidad);
 
-        // 3. Guardar en la base de datos
         Doctor guardado = doctorRepository.save(doctor);
-
-        // 4. Devolver DTO
         return doctorMapper.toDTO(guardado);
     }
 
@@ -74,13 +74,11 @@ public class DoctorService {
      * Actualizar un médico existente.
      */
     public DoctorDTO actualizar(Long id, DoctorDTO dto) {
-        // 1. Buscar el médico existente
         Doctor doctorExistente = doctorRepository.findById(id).orElse(null);
         if (doctorExistente == null) {
-            return null; // No existe el médico
+            return null;
         }
 
-        // 2. Actualizar campos básicos
         doctorExistente.setNombre(dto.getNombre());
         doctorExistente.setApellido(dto.getApellido());
         doctorExistente.setSexo(dto.getSexo());
@@ -89,7 +87,6 @@ public class DoctorService {
         doctorExistente.setTelefono(dto.getTelefono());
         doctorExistente.setFoto(dto.getFoto());
 
-        // 3. Actualizar especialidad si se envió
         if (dto.getEspecialidad() != null && dto.getEspecialidad().getId() != null) {
             Especialidad especialidad = especialidadRepository.findById(dto.getEspecialidad().getId())
                     .orElse(null);
@@ -98,20 +95,25 @@ public class DoctorService {
             }
         }
 
-        // 4. Guardar cambios
         Doctor actualizado = doctorRepository.save(doctorExistente);
-
-        // 5. Devolver DTO
         return doctorMapper.toDTO(actualizado);
     }
 
     /**
      * Eliminar un médico por su ID.
+     * 🔥 Verifica si tiene citas asociadas antes de eliminar.
      */
+    @Transactional
     public boolean eliminar(Long id) {
         if (!doctorRepository.existsById(id)) {
             return false;
         }
+
+        // 🔥 VERIFICAR SI TIENE CITAS ASOCIADAS
+        if (citaRepository.existsByDoctorId(id)) {
+            throw new RuntimeException("El médico tiene citas asociadas y no puede ser eliminado.");
+        }
+
         doctorRepository.deleteById(id);
         return true;
     }

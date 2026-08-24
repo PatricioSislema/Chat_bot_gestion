@@ -213,11 +213,17 @@ function Medicos() {
         try {
             await api.delete(`/doctores/${deleteId}`);
             setShowConfirm(false);
-            showToast('Médico eliminado con éxito');
+            showToast('✅ Médico eliminado con éxito');
             fetchMedicos();
         } catch (error) {
             console.error('Error al eliminar médico:', error);
-            showToast('Error al eliminar médico', 'danger');
+
+            // 🔥 MENSAJE AMIGABLE PARA EL USUARIO
+            if (error.response && error.response.status === 500) {
+                showToast('⚠️ No se puede eliminar el médico porque tiene citas asociadas.', 'warning');
+            } else {
+                showToast('❌ Error al eliminar médico. Por favor, intenta de nuevo.', 'danger');
+            }
         } finally {
             setDeleting(false);
             setDeleteId(null);
