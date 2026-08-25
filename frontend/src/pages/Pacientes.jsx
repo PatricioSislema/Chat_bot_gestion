@@ -380,10 +380,11 @@ function Pacientes() {
               label="Nombres"
               name="nombres"
               value={form.nombres}
-              onChange={(e) => setForm({ ...form, nombress: e.target.value })}
+              onChange={(e) => setForm({ ...form, nombres: e.target.value })}
               placeholder="Ingrese los nombres"
               error={errors.nombres}
               required
+	      disabled={false}
             />
           </Col>
           <Col md={6}>
@@ -395,6 +396,7 @@ function Pacientes() {
               placeholder="Ingrese los apellidos"
               error={errors.apellidos}
               required
+	      disabled={false}
             />
           </Col>
         </Row>
